@@ -7,8 +7,9 @@ import com.handson.backend.repository.RedisRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentLruCache;
 
+// Real Subject
 @Service
-public class RedisCacheService {
+public class RedisCacheService implements ArticleCache{
     private final RedisRepository redisRepository;
     private final ArticleRepository articleRepository;
 

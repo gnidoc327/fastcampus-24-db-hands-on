@@ -13,28 +13,34 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+//Proxy
 @Service
-public class ArticleService {
+public class ArticleProxyService {
     private final ArticleRepository articleRepository;
 
-    private final UserRepository userRepository;
-
-    private final ObjectMapper objectMapper;
+    // Real Subject
+    private final LocalCacheService localCacheService;
+    private final RedisCacheService redisCacheService;
 
     @Autowired
-    public ArticleService(ArticleRepository articleRepository, UserRepository userRepository,
-                          ObjectMapper objectMapper) {
+    public ArticleProxyService(ArticleRepository articleRepository, LocalCacheService localCacheService, RedisCacheService redisCacheService) {
         this.articleRepository = articleRepository;
-        this.userRepository = userRepository;
-        this.objectMapper = objectMapper;
+        this.localCacheService = localCacheService;
+        this.redisCacheService = redisCacheService;
     }
 
     public Article getArticle(Long articleId) {
-        Optional<Article> article = articleRepository.findById(articleId);
-        if (article.isEmpty()) {
-            throw new ResourceNotFoundException("article not found");
+        Article article = localCacheService.getArticle(articleId);
+        if (article != null) {
+            return article;
         }
-        return article.get();
+        article = redisCacheService.getArticle(articleId);
+        if (article != null) {
+            localCacheService.updateArticle(article);
+            return article;
+        }
+
+        return articleRepository.findById(articleId).orElseThrow(() -> new ResourceNotFoundException(articleId + " article not found in mysql"));
     }
 
     @Transactional
@@ -59,6 +65,9 @@ public class ArticleService {
             article.setIsHotArticle(dto.getIsHotArticle());
         }
         articleRepository.save(article);
+        if (dto.getIsHotArticle()) {
+            redisCacheService.updateArticle(article);
+        }
         return article;
     }
 

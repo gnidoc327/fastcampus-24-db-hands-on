@@ -6,8 +6,9 @@ import com.handson.backend.repository.ArticleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentLruCache;
 
+// Real Subject
 @Service
-public class LocalCacheService {
+public class LocalCacheService implements ArticleCache {
     private final ConcurrentLruCache<Long, Article> cache;
     private final ArticleRepository articleRepository;
 
@@ -29,8 +30,8 @@ public class LocalCacheService {
         }
     }
 
-    public Article updateArticle(long articleId) {
-        this.cache.remove(articleId);
-        return this.cache.get(articleId);
+    public void updateArticle(Article article) {
+        this.cache.remove(article.getId());
+        this.cache.get(article.getId());
     }
 }
