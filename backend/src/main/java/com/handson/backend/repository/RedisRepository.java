@@ -1,6 +1,7 @@
 package com.handson.backend.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.handson.backend.entity.Article;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 

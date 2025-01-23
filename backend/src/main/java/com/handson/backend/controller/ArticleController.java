@@ -5,6 +5,7 @@ import com.handson.backend.dto.WriteArticleDto;
 import com.handson.backend.entity.Article;
 import com.handson.backend.service.ArticleService;
 import com.handson.backend.service.LocalCacheService;
+import com.handson.backend.service.RedisCacheService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,14 +14,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/articles")
 public class ArticleController {
     private final ArticleService articleService;
-    private final LocalCacheService localCacheService;
+//    private final LocalCacheService localCacheService;
+    private final RedisCacheService redisCacheService;
 
 
     @Autowired
-    public ArticleController(ArticleService articleService, LocalCacheService localCacheService) {
+    public ArticleController(ArticleService articleService, LocalCacheService localCacheService, RedisCacheService redisCacheService) {
 
         this.articleService = articleService;
-        this.localCacheService = localCacheService;
+//        this.localCacheService = localCacheService;
+        this.redisCacheService = redisCacheService;
     }
 
     @PostMapping("")
@@ -31,8 +34,10 @@ public class ArticleController {
     @PutMapping("/{articleId}")
     public ResponseEntity<Article> editArticle(@PathVariable Long articleId,
                                                @RequestBody EditArticleDto editArticleDto) {
-        articleService.editArticle(articleId, editArticleDto);
-        Article article = localCacheService.updateArticle(articleId);
+        Article article = articleService.editArticle(articleId, editArticleDto);
+        if (editArticleDto.getIsHotArticle()) {
+            redisCacheService.updateArticle(article);
+        }
         return ResponseEntity.ok(article);
     }
 
@@ -44,6 +49,6 @@ public class ArticleController {
 
     @GetMapping("/{articleId}")
     public ResponseEntity<Article> getArticleWithComment(@PathVariable Long articleId) {
-        return ResponseEntity.ok(localCacheService.getArticle(articleId));
+        return ResponseEntity.ok(redisCacheService.getArticle(articleId));
     }
 }
